@@ -229,21 +229,21 @@ func BenchmarkGenSharedKeyP256(b *testing.B) {
 }
 
 // Benchmark the generation of S256 shared keys.
-//func BenchmarkGenSharedKeyS256(b *testing.B) {
-//	prv, err := GenerateKey(rand.Reader, crypto.S256(), nil)
-//	if err != nil {
-//		fmt.Println(err.Error())
-//		b.FailNow()
-//	}
-//	b.ResetTimer()
-//	for i := 0; i < b.N; i++ {
-//		_, err := prv.GenerateShared(&prv.PublicKey, 16, 16)
-//		if err != nil {
-//			fmt.Println(err.Error())
-//			b.FailNow()
-//		}
-//	}
-//}
+func BenchmarkGenSharedKeyS256(b *testing.B) {
+	prv, err := GenerateKey(rand.Reader, DefaultCurve, nil)
+	if err != nil {
+		fmt.Println(err.Error())
+		b.FailNow()
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := prv.GenerateShared(&prv.PublicKey, 16, 16)
+		if err != nil {
+			fmt.Println(err.Error())
+			b.FailNow()
+		}
+	}
+}
 
 // Verify that an encrypted message can be successfully decrypted.
 func TestEncryptDecrypt(t *testing.T) {
