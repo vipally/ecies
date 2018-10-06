@@ -173,33 +173,33 @@ func TestSharedKey(t *testing.T) {
 //	}
 //}
 
-// Verify that the key generation code fails when too much key data is
-// requested.
-func TestTooBigSharedKey(t *testing.T) {
-	prv1, err := GenerateKey(rand.Reader, DefaultCurve, nil)
-	if err != nil {
-		fmt.Println(err.Error())
-		t.FailNow()
-	}
+//// Verify that the key generation code fails when too much key data is
+//// requested.
+//func TestTooBigSharedKey(t *testing.T) {
+//	prv1, err := GenerateKey(rand.Reader, DefaultCurve, nil)
+//	if err != nil {
+//		fmt.Println(err.Error())
+//		t.FailNow()
+//	}
 
-	prv2, err := GenerateKey(rand.Reader, DefaultCurve, nil)
-	if err != nil {
-		fmt.Println(err.Error())
-		t.FailNow()
-	}
+//	prv2, err := GenerateKey(rand.Reader, DefaultCurve, nil)
+//	if err != nil {
+//		fmt.Println(err.Error())
+//		t.FailNow()
+//	}
 
-	_, err = prv1.GenerateShared(&prv2.PublicKey, 32, 32)
-	if err != ErrSharedKeyTooBig {
-		fmt.Println("ecdh: shared key should be too large for curve")
-		t.FailNow()
-	}
+//	_, err = prv1.GenerateShared(&prv2.PublicKey, 32, 32)
+//	if err != ErrSharedKeyTooBig {
+//		fmt.Println("ecdh: shared key should be too large for curve")
+//		t.FailNow()
+//	}
 
-	_, err = prv2.GenerateShared(&prv1.PublicKey, 32, 32)
-	if err != ErrSharedKeyTooBig {
-		fmt.Println("ecdh: shared key should be too large for curve")
-		t.FailNow()
-	}
-}
+//	_, err = prv2.GenerateShared(&prv1.PublicKey, 32, 32)
+//	if err != ErrSharedKeyTooBig {
+//		fmt.Println("ecdh: shared key should be too large for curve")
+//		t.FailNow()
+//	}
+//}
 
 // Benchmark the generation of P256 keys.
 func BenchmarkGenerateKeyP256(b *testing.B) {
@@ -247,40 +247,44 @@ func BenchmarkGenSharedKeyP256(b *testing.B) {
 
 // Verify that an encrypted message can be successfully decrypted.
 func TestEncryptDecrypt(t *testing.T) {
-	prv1, err := GenerateKey(rand.Reader, DefaultCurve, nil)
-	if err != nil {
-		fmt.Println(err.Error())
-		t.FailNow()
-	}
+	for _, v := range testCases {
+		curve := v.Curve
 
-	prv2, err := GenerateKey(rand.Reader, DefaultCurve, nil)
-	if err != nil {
-		fmt.Println(err.Error())
-		t.FailNow()
-	}
+		prv1, err := GenerateKey(rand.Reader, curve, nil)
+		if err != nil {
+			fmt.Println(err.Error())
+			t.FailNow()
+		}
 
-	message := []byte("Hello, world.")
-	ct, err := Encrypt(rand.Reader, &prv2.PublicKey, message, nil, nil)
-	if err != nil {
-		fmt.Println(err.Error())
-		t.FailNow()
-	}
+		prv2, err := GenerateKey(rand.Reader, curve, nil)
+		if err != nil {
+			fmt.Println(err.Error())
+			t.FailNow()
+		}
 
-	pt, err := prv2.Decrypt(ct, nil, nil)
-	if err != nil {
-		fmt.Println(err.Error())
-		t.FailNow()
-	}
+		message := []byte("Hello, world.")
+		ct, err := Encrypt(rand.Reader, &prv2.PublicKey, message, nil, nil)
+		if err != nil {
+			fmt.Println(err.Error())
+			t.FailNow()
+		}
 
-	if !bytes.Equal(pt, message) {
-		fmt.Println("ecies: plaintext doesn't match message")
-		t.FailNow()
-	}
+		pt, err := prv2.Decrypt(ct, nil, nil)
+		if err != nil {
+			fmt.Println(err.Error())
+			t.FailNow()
+		}
 
-	_, err = prv1.Decrypt(ct, nil, nil)
-	if err == nil {
-		fmt.Println("ecies: encryption should not have succeeded")
-		t.FailNow()
+		if !bytes.Equal(pt, message) {
+			fmt.Println("ecies: plaintext doesn't match message")
+			t.FailNow()
+		}
+
+		_, err = prv1.Decrypt(ct, nil, nil)
+		if err == nil {
+			fmt.Println("ecies: encryption should not have succeeded")
+			t.FailNow()
+		}
 	}
 }
 
@@ -313,6 +317,56 @@ func TestDecryptShared2(t *testing.T) {
 		t.Fatal("ecies: decrypting with incorrect shared data didn't fail")
 	}
 }
+
+//// TestMarshalEncryption validates the encode/decode produces a valid
+//// ECIES encryption key.
+//func TestMarshalEncryption(t *testing.T) {
+//	for _, v := range testCases {
+//		curve := v.Curve
+
+//		prv1, err := GenerateKey(rand.Reader, curve, nil)
+//		if err != nil {
+//			fmt.Println(err.Error())
+//			t.FailNow()
+//		}
+
+//		out, err := MarshalPrivate(prv1)
+//		if err != nil {
+//			fmt.Println(err.Error())
+//			t.FailNow()
+//		}
+
+//		prv2, err := UnmarshalPrivate(out)
+//		if err != nil {
+//			fmt.Println(err.Error())
+//			t.FailNow()
+//		}
+
+//		message := []byte("Hello, world.")
+//		ct, err := Encrypt(rand.Reader, &prv2.PublicKey, message, nil, nil)
+//		if err != nil {
+//			fmt.Println(err.Error())
+//			t.FailNow()
+//		}
+
+//		pt, err := prv2.Decrypt(ct, nil, nil)
+//		if err != nil {
+//			fmt.Println(err.Error())
+//			t.FailNow()
+//		}
+
+//		if !bytes.Equal(pt, message) {
+//			fmt.Println("ecies: plaintext doesn't match message")
+//			t.FailNow()
+//		}
+
+//		_, err = prv1.Decrypt(ct, nil, nil)
+//		if err != nil {
+//			fmt.Println(err.Error())
+//			t.FailNow()
+//		}
+//	}
+//}
 
 type testCase struct {
 	Curve    elliptic.Curve

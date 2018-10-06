@@ -122,18 +122,22 @@ func (prv *PrivateKey) GenerateShared(pub *PublicKey, skLen, macLen int) (sk []b
 	if prv.PublicKey.Curve != pub.Curve {
 		return nil, ErrInvalidCurve
 	}
-	if skLen+macLen > MaxSharedKeyLength(pub) {
-		return nil, ErrSharedKeyTooBig
-	}
+	//	if skLen+macLen > MaxSharedKeyLength(pub) {
+	//		//fmt.Println("GenerateShared", pub.Curve.Params().BitSize, skLen, macLen, skLen+macLen, MaxSharedKeyLength(pub))
+	//		//return nil, ErrSharedKeyTooBig
+	//	}
 
 	x, _ := pub.Curve.ScalarMult(pub.X, pub.Y, prv.D.Bytes())
 	if x == nil {
 		return nil, ErrSharedKeyIsPointAtInfinity
 	}
 
-	sk = make([]byte, skLen+macLen)
+	//sk = make([]byte, skLen+macLen)
 	skBytes := x.Bytes()
-	copy(sk[len(sk)-len(skBytes):], skBytes)
+
+	sk = make([]byte, len(skBytes))
+	//copy(sk[len(sk)-len(skBytes):], skBytes)
+	copy(sk, skBytes)
 	return sk, nil
 }
 
@@ -187,7 +191,7 @@ func concatKDF(hash hash.Hash, z, s1 []byte, kdLen int) (k []byte, err error) {
 		incCounter(counter)
 	}
 
-	k = k[:kdLen]
+	//k = k[:kdLen]
 	return
 }
 
@@ -314,7 +318,13 @@ func (prv *PrivateKey) Decrypt(c, s1, s2 []byte) (m []byte, err error) {
 
 	switch c[0] {
 	case 2, 3, 4:
-		rLen = (prv.PublicKey.Curve.Params().BitSize + 7) / 4
+		//see  elliptic.Unmarshal
+		//		byteLen := (curve.Params().BitSize + 7) >> 3
+		//		if len(data) != 1+2*byteLen {
+		//			return
+		//		}
+		rLen = (prv.PublicKey.Curve.Params().BitSize+7)>>2 | 0x01
+		//rLen = (prv.PublicKey.Curve.Params().BitSize + 7) / 4
 		if len(c) < (rLen + hLen + 1) {
 			err = ErrInvalidMessage
 			return
